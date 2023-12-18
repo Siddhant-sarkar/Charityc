@@ -1,36 +1,37 @@
 import React, { useState } from "react";
+import OpenAI from "openai";
 import { CustomButton } from "../components";
 
 const Chat = () => {
-  const [query, setQuery] = useState("");
-  const [result, setResult] = useState("");
+  const openAI = new OpenAI({
+    apiKey: 'asdfasdfasdfsd',
+    dangerouslyAllowBrowser: true
+  });
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
 
+  const [prompt, setPrompt] = useState("");
+  const [apiResponse, setApiResponse] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
     try {
-      const response = await fetch(
-        "https://api.openai.com/v1/engines/davinci/completions",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer YOUR_API_KEY", // Replace 'YOUR_API_KEY' with your actual API key
-          },
-          body: JSON.stringify({
-            prompt: query,
-            max_tokens: 50, // Change the max_tokens as needed
-          }),
-        }
-      );
-
-      const data = await response.json();
-      setResult(data.choices[0].text.trim());
-    } catch (error) {
-      console.error("Error:", error);
-      // Handle error state or display an error message
+      const result = await openAI.chat.completions.create({
+        model: "text-davinci-003",
+        prompt: prompt,
+        temperature: 0.5,
+        max_tokens: 4000,
+      });
+      //console.log("response", result.data.choices[0].text);
+      setApiResponse(result.data.choices[0].text);
+    } catch (e) {
+      //console.log(e);
+      setApiResponse("Something is going wrong, Please try again.");
     }
+    setLoading(false);
   };
+
 
   return (
     <div className="bg-gradient-to-br from-blue-500 to-purple-500 flex justify-between items-center flex-col h-5/6 rounded-[10px] sm:p-10 p-4 shadow-2xl">
@@ -39,9 +40,9 @@ const Chat = () => {
         Ask us <span className="underline">Anything !</span>
       </div>
       <div className="h-full w-full bg-gray-100 rounded-md bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-20 text-white text-2xl">
-        {result && (
-          <p className="mt-4">
-            Result: <strong>{result}</strong>
+        {apiResponse && (
+          <p className="p-7">
+            {apiResponse}
           </p>
         )}
       </div>
@@ -51,16 +52,18 @@ const Chat = () => {
             {/* <label className="h-full w-full text-center">Query</label> */}
             <input
               type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="h-full w-full bg-transparent text-white"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              className="h-full w-full bg-transparent p-3 text-white font-bold focus:outline-none"
             />
           </div>
-          <CustomButton
-            btnType="submit"
-            title="Ask Now !"
-            styles="bg-[#1dc071]"
-          />
+          <button
+            disabled={loading || prompt.length === 0}
+            type="submit"
+            className="font-epilogue font-semibold text-[16px] leading-[26px] text-white min-h-[52px] px-4 rounded-[10px] bg-emerald-500"
+          >
+            {loading ? "Generating..." : "Generate"}
+          </button>
         </div>
       </form>
       <div className="text-white"></div>
@@ -69,3 +72,4 @@ const Chat = () => {
 };
 
 export default Chat;
+
