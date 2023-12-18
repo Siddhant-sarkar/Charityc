@@ -1,14 +1,7 @@
 import React, { useState } from "react";
-import OpenAI from "openai";
 import { CustomButton } from "../components";
 
 const Chat = () => {
-  const openAI = new OpenAI({
-    apiKey: 'asdfasdfasdfsd',
-    dangerouslyAllowBrowser: true
-  });
-
-
   const [prompt, setPrompt] = useState("");
   const [apiResponse, setApiResponse] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,21 +10,26 @@ const Chat = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const result = await openAI.chat.completions.create({
-        model: "text-davinci-003",
-        prompt: prompt,
-        temperature: 0.5,
-        max_tokens: 4000,
+      console.log("doing api call")
+      const response = await fetch("http://localhost:6969/ask", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: prompt,
+        }),
       });
-      //console.log("response", result.data.choices[0].text);
-      setApiResponse(result.data.choices[0].text);
+
+      const responseData = await response.json();
+      console.log(responseData.message.content);
+      setApiResponse(responseData.message.content);
     } catch (e) {
-      //console.log(e);
+      console.log(e);
       setApiResponse("Something is going wrong, Please try again.");
     }
     setLoading(false);
   };
-
 
   return (
     <div className="bg-gradient-to-br from-blue-500 to-purple-500 flex justify-between items-center flex-col h-5/6 rounded-[10px] sm:p-10 p-4 shadow-2xl">
@@ -40,11 +38,7 @@ const Chat = () => {
         Ask us <span className="underline">Anything !</span>
       </div>
       <div className="h-full w-full bg-gray-100 rounded-md bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-20 text-white text-2xl">
-        {apiResponse && (
-          <p className="p-7">
-            {apiResponse}
-          </p>
-        )}
+        {apiResponse && <p className="p-7">{apiResponse}</p>}
       </div>
       <form onSubmit={handleSubmit} className="w-full">
         <div className="flex pt-7 w-full h-full justify-evenly">
@@ -72,4 +66,3 @@ const Chat = () => {
 };
 
 export default Chat;
-
